@@ -28,6 +28,8 @@ getdata<-function(fileUrl, dir, filename, ext){
         }
         dest
 }
+
+# get the swift key data set 
 fileURL1 <- 
         "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip" 
 dataset<-getdata(fileUrl = fileURL1, 
@@ -37,6 +39,7 @@ dataset<-getdata(fileUrl = fileURL1,
 if(!exists("./final")){
         swiftKey<-unzip(zipfile = dataset)
 }
+
 # obtain a list of profane words to filter out of the corpus
 fileURL2<-
         "https://raw.githubusercontent.com/shutterstock/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en"
@@ -89,22 +92,25 @@ stripPunct<-function(text){
         escape_regex <- function(r) {
                 stri_replace_all_regex(r, "\\(|\\)|\\[|\\]", "\\\\$0")
         }
-        regex <- stri_c("(", stri_c(escape_regex(emots), "'", "-", collapse="|"), ")")
+        regex <- stri_c("(", stri_c(escape_regex(emots), collapse="|"), ")")
         stri_replace_all_regex(text, stri_c(regex, "|\\p{P}"), "$1")
 }
 
 # profanity filtering
 filterProfanities<-function(text){
         badwords<-fread(profanities, header = F, stringsAsFactors = T, sep = "\n")
-        badwords<-paste("\\<", badwords$V1, "\\>", collapse = "|")
-        gsub(pattern = badwords, replacement = "", x = text)
+        # the list of profanities contains phrases, which are removed
+        badwords<-paste("\\<", badwords$V1[-grep(pattern = " ", badwords$V1)], "\\>", sep = "", collapse = "|")
+        cleanText<-gsub(pattern = badwords, replacement = "", x = text)
+        cleanText
 }
 
 
 cleanSample<-function(text){
-        stripOdd<-iconv(text, "latin1", "ASCII", sub="")
-        cleanText<-filterProfanities(stripOdd)
-        stripPunct(cleanText)
+        noOdd<-iconv(text, "latin1", "ASCII", sub="")
+        noPunct<-stripPunct(noOdd)
+        cleanText<-filterProfanities(noPunct)
+        cleanText
 }
 
 sample<-sampleData(language = "en", 
